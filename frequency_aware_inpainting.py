@@ -351,15 +351,17 @@ def wavelet_loss(pred: torch.Tensor, target: torch.Tensor, dwt: HaarDWT) -> torc
 def compute_losses(outputs, batch, dwt, cfg: Config):
     gt = batch["image"]
     mask = batch["mask"]
-    pred = outputs["comp_refined"]
+
+    pred_raw = outputs["refined"]         # composite 전
+    pred_comp = outputs["comp_refined"]   # 시각화/평가용
     importance = outputs["importance"]
 
     target_map = build_importance_target(gt, dwt)
 
-    rec = F.l1_loss(pred, gt)
-    masked = (mask * (pred - gt).abs()).mean()
+    rec = F.l1_loss(pred_raw, gt)
+    masked = (mask * (pred_raw - gt).abs()).mean()
     map_loss = F.l1_loss(importance, target_map)
-    wav = wavelet_loss(pred, gt, dwt)
+    wav = wavelet_loss(pred_raw, gt, dwt)
     sparse = importance.mean()
 
     total = (
